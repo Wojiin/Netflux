@@ -68,6 +68,7 @@ class AppFixtures extends Fixture
             type: ContentType::MOVIE,
             releasedAt: '2010-07-16',
             imgLink: 'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg',
+            videoLink: 'https://www.imdb.com/video/vi2861040665/',
             duration: 148,
             synopsis: "Dom Cobb est un voleur spécialiste de l'extraction de secrets dans les rêves et accepte une mission d'inception réputée impossible.",
             rate: 5,
@@ -80,6 +81,7 @@ class AppFixtures extends Fixture
             type: ContentType::MOVIE,
             releasedAt: '1999-03-31',
             imgLink: 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
+            videoLink: 'https://www.imdb.com/video/vi3203793177/',
             duration: 136,
             synopsis: "Neo découvre que la réalité est une simulation et rejoint la résistance pour combattre les machines.",
             rate: 5,
@@ -92,6 +94,7 @@ class AppFixtures extends Fixture
             type: ContentType::MOVIE,
             releasedAt: '1994-09-23',
             imgLink: 'https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg',
+            videoLink: 'https://www.imdb.com/video/vi3877612057/',
             duration: 142,
             synopsis: "Condamné à perpétuité, Andy Dufresne noue une profonde amitié avec Red et garde espoir malgré les années de prison.",
             rate: 5,
@@ -104,6 +107,7 @@ class AppFixtures extends Fixture
             type: ContentType::MOVIE,
             releasedAt: '2001-12-19',
             imgLink: 'https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg',
+            videoLink: 'https://www.imdb.com/title/tt0120737/trailers/',
             duration: 178,
             synopsis: "Frodon hérite de l'Anneau Unique et quitte la Comté avec la Communauté pour empêcher Sauron de régner sur la Terre du Milieu.",
             rate: 5,
@@ -183,6 +187,7 @@ class AppFixtures extends Fixture
         ContentType $type,
         string $releasedAt,
         string $imgLink,
+        string $videoLink,
         int $duration,
         string $synopsis,
         ?int $rate,
@@ -194,6 +199,7 @@ class AppFixtures extends Fixture
         $film->setType($type);
         $film->setReleasedAt(new \DateTimeImmutable($releasedAt));
         $film->setImgLink($imgLink);
+        $film->setVideoLink($videoLink);
         $film->setDuration($duration);
         $film->setSynopsis($synopsis);
         $film->setRate($rate);

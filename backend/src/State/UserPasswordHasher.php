@@ -23,20 +23,9 @@ final class UserPasswordHasher implements ProcessorInterface
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
-        if (!$data instanceof User) {
-            return $data;
-        }
-
-        $plainPassword = $data->getPlainPassword();
-
-        if ($plainPassword !== null && $plainPassword !== '') {
-            $data->setPassword($this->passwordHasher->hashPassword($data, $plainPassword));
-        }
-
-        $data->setPlainPassword(null);
-
-        if ('/register' === $operation->getUriTemplate()) {
-            $data->setRoles(['ROLE_USER']);
+        if ($data instanceof User && $data->getPlainPassword()) {
+            $data->setPassword($this->passwordHasher->hashPassword($data, $data->getPlainPassword()));
+            $data->setPlainPassword(null);
         }
 
         return $this->persistProcessor->process($data, $operation, $uriVariables, $context);

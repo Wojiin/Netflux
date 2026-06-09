@@ -188,6 +188,17 @@ class Film
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'watchedFilms')]
     private Collection $watchedByUsers;
 
+    #[ORM\Column(name: 'video_link', length: 255)]
+    #[ApiProperty(
+        description: 'URL de la bande-annonce du film.',
+        openapiContext: ['example' => 'https://www.imdb.com/video/vi2861040665/']
+    )]
+    #[Groups(['movie:read', 'movie:write'])]
+    #[Assert\NotBlank]
+    #[Assert\Url]
+    #[Assert\Length(max: 255)]
+    private ?string $videoLink = null;
+
     public function __construct()
     {
         $this->plays = new ArrayCollection();
@@ -471,5 +482,17 @@ class Film
     public static function toPosterUrls(Collection $posters): array
     {
         return $posters->map(static fn (Poster $poster) => $poster->getUrl())->toArray();
+    }
+
+    public function getVideoLink(): ?string
+    {
+        return $this->videoLink;
+    }
+
+    public function setVideoLink(string $videoLink): static
+    {
+        $this->videoLink = $videoLink;
+
+        return $this;
     }
 }

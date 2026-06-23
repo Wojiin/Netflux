@@ -56,7 +56,8 @@ COPY composer.* ./
 RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloader
 
 COPY . .
-RUN composer dump-autoload --optimize --classmap-authoritative \
+RUN mkdir -p var \
+    && composer dump-autoload --optimize --classmap-authoritative \
     && chown -R www-data:www-data var
 
 EXPOSE 9000

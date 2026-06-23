@@ -33,12 +33,14 @@ const {
         <StatusMessage v-if="error" variant="error">Erreur : {{ error }}</StatusMessage>
         <StatusMessage v-if="success" variant="success">Profil modifié avec succès.</StatusMessage>
 
-        <form class="grid gap-5" @submit.prevent="submitProfile">
+        <form class="grid gap-5" autocomplete="off" @submit.prevent="submitProfile">
           <FormField label="Email" v-slot="{ controlClass }">
             <input
               v-model="form.email"
               type="email"
               required
+              autocomplete="email"
+              name="profile-email"
               :class="controlClass"
             />
           </FormField>
@@ -49,6 +51,10 @@ const {
               type="password"
               minlength="8"
               placeholder="Laisser vide pour ne pas changer"
+              autocomplete="new-password"
+              name="profile-new-password"
+              data-lpignore="true"
+              data-1p-ignore="true"
               :class="controlClass"
             />
           </FormField>

@@ -9,6 +9,10 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[Map(source: Person::class)]
 final class PersonOutput
 {
+    #[Map(source: 'id')]
+    #[Groups(['person:read'])]
+    public ?int $id = null;
+
     #[Groups(['person:read'])]
     public ?string $firstName = null;
 
@@ -27,9 +31,17 @@ final class PersonOutput
     #[Groups(['person:read'])]
     public bool $isDirector = false;
 
+    #[Groups(['person:read'])]
+    public ?string $portraitLink = null;
+
     public function getFirstName(): ?string
     {
         return $this->firstName;
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
     }
 
     public function getLastName(): ?string
@@ -55,5 +67,10 @@ final class PersonOutput
     public function isDirector(): bool
     {
         return $this->isDirector;
+    }
+
+    public function getPortraitLink(): ?string
+    {
+        return $this->portraitLink;
     }
 }

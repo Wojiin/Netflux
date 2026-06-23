@@ -1,4 +1,10 @@
 lexik_jwt_authentication:
+    # LexikJWTAuthenticationBundle signe les access tokens avec la clé privée
+    # et vérifie leur validité avec la clé publique.
     secret_key: '%env(resolve:JWT_SECRET_KEY)%'
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
+    # Chaque JWT d'accès est valable une heure.
+    token_ttl: 3600
+    # On interdit explicitement les tokens sans claim d'expiration.
+    allow_no_expiration: false

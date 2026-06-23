@@ -10,13 +10,22 @@ use Symfony\Component\Serializer\Attribute\Groups;
 final class GenreOutput
 {
     #[Groups(['genre:read'])]
+    public ?int $id = null;
+
+    #[Groups(['genre:read'])]
     public ?string $name = null;
 
     /**
      * @var list<string>
      */
+    #[Map(source: 'films', transform: [Genre::class, 'toFilmTitles'])]
     #[Groups(['genre:read'])]
     public array $filmTitles = [];
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
     public function getName(): ?string
     {

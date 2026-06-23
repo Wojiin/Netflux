@@ -14,12 +14,15 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Dto\DirectorOutput;
+use App\Dto\PersonProfileInput;
 use App\Repository\DirectorRepository;
+use App\State\PersonProfileWriteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiFilter(SearchFilter::class, properties: [
     'person.firstName' => 'partial',
@@ -36,7 +39,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
     denormalizationContext: ['groups' => ['director:write']],
     operations: [
         new Get(
-            output: DirectorOutput::class,
+            // GET item laisse API Platform hydrater une vraie entité Director
+            // depuis son IRI lorsqu'un Film référence /api/directors/{id}.
             description: "Retourne le détail d'un réalisateur.",
         ),
         new GetCollection(
@@ -44,24 +48,30 @@ use Symfony\Component\Serializer\Attribute\Groups;
             description: 'Retourne la liste des réalisateurs.',
         ),
         new Post(
+            input: PersonProfileInput::class,
+            processor: PersonProfileWriteProcessor::class,
             description: 'Crée un nouveau réalisateur dans le catalogue.',
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Seul un administrateur peut créer un réalisateur.'
         ),
         new Put(
+            input: PersonProfileInput::class,
+            processor: PersonProfileWriteProcessor::class,
             description: 'Remplace complètement un réalisateur existant.',
             security: "is_granted('ROLE_ADMIN')",
-            securityMessage: 'Seul un administrateur peut modifier un realisateur.'
+            securityMessage: 'Seul un administrateur peut modifier un réalisateur.'
         ),
         new Patch(
-            description: 'Modifie partiellement un realisateur existant.',
+            input: PersonProfileInput::class,
+            processor: PersonProfileWriteProcessor::class,
+            description: 'Modifie partiellement un réalisateur existant.',
             security: "is_granted('ROLE_ADMIN')",
-            securityMessage: 'Seul un administrateur peut modifier un realisateur.'
+            securityMessage: 'Seul un administrateur peut modifier un réalisateur.'
         ),
         new Delete(
-            description: 'Supprime un realisateur du catalogue.',
+            description: 'Supprime un réalisateur du catalogue.',
             security: "is_granted('ROLE_ADMIN')",
-            securityMessage: 'Seul un administrateur peut supprimer un realisateur.'
+            securityMessage: 'Seul un administrateur peut supprimer un réalisateur.'
         ),
     ]
 )]
@@ -74,20 +84,24 @@ class Director
     #[Groups(['director:read', 'movie:read'])]
     private ?int $id = null;
 
-    #[ORM\OneToOne(inversedBy: 'directorProfile', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'directorProfile', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     #[ApiProperty(
         description: 'Personne associée à ce réalisateur.',
         openapiContext: ['example' => '/api/people/5']
     )]
+    #[Assert\DisableAutoMapping]
     #[Map(target: 'fullName', transform: [self::class, 'toFullName'])]
-    #[Groups(['director:read', 'director:write', 'movie:read'])]
+    #[Map(target: 'gender', source: 'person.gender')]
+    #[Map(target: 'birthday', source: 'person.birthday')]
+    #[Groups(['director:read', 'movie:read'])]
     private ?Person $person = null;
 
     /**
      * @var Collection<int, Film>
      */
-    #[ORM\OneToMany(targetEntity: Film::class, mappedBy: 'director')]
+    #[ORM\ManyToMany(targetEntity: Film::class, mappedBy: 'directors')]
+    #[Map(target: 'directedMovies', transform: [self::class, 'toDirectedMovies'])]
     private Collection $films;
 
     public function __construct()
@@ -124,7 +138,7 @@ class Director
     {
         if (!$this->films->contains($film)) {
             $this->films->add($film);
-            $film->setDirector($this);
+            $film->addDirector($this);
         }
 
         return $this;
@@ -133,9 +147,7 @@ class Director
     public function removeFilm(Film $film): static
     {
         if ($this->films->removeElement($film)) {
-            if ($film->getDirector() === $this) {
-                $film->setDirector(null);
-            }
+            $film->removeDirector($this);
         }
 
         return $this;
@@ -146,5 +158,25 @@ class Director
         $fullName = trim(sprintf('%s %s', $person?->getFirstName() ?? '', $person?->getLastName() ?? ''));
 
         return '' === $fullName ? null : $fullName;
+    }
+
+    /**
+     * @param Collection<int, Film> $films
+     *
+     * @return list<array{filmId:int|null, title:?string, imgLink:?string, releasedAt:?\DateTimeImmutable, type:?string}>
+     */
+    public static function toDirectedMovies(Collection $films): array
+    {
+        return $films
+            ->map(static function (Film $film): array {
+                return [
+                    'filmId' => $film->getId(),
+                    'title' => $film->getTitle(),
+                    'imgLink' => $film->getImgLink(),
+                    'releasedAt' => $film->getReleasedAt(),
+                    'type' => Film::toTypeValue($film->getType()),
+                ];
+            })
+            ->toArray();
     }
 }

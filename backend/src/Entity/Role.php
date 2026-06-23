@@ -39,14 +39,14 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(
             output: RoleOutput::class,
             description: "Retourne le détail d'un rôle.",
-            security: "is_granted('ROLE_USER')",
-            securityMessage: 'Vous devez être connecté pour consulter un rôle.'
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Seul un administrateur peut consulter un rôle.'
         ),
         new GetCollection(
             output: RoleOutput::class,
             description: 'Retourne la liste des rôles.',
-            security: "is_granted('ROLE_USER')",
-            securityMessage: 'Vous devez être connecté pour consulter les rôles.'
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Seul un administrateur peut consulter les rôles.'
         ),
         new Post(
             description: 'Crée un nouveau rôle dans le catalogue.',
@@ -54,19 +54,21 @@ use Symfony\Component\Validator\Constraints as Assert;
             securityMessage: 'Seul un administrateur peut créer un rôle.'
         ),
         new Put(
+            output: false,
             description: 'Remplace complètement un rôle existant.',
             security: "is_granted('ROLE_ADMIN')",
-            securityMessage: 'Seul un administrateur peut modifier un role.'
+            securityMessage: 'Seul un administrateur peut modifier un rôle.'
         ),
         new Patch(
-            description: 'Modifie partiellement un role existant.',
+            output: false,
+            description: 'Modifie partiellement un rôle existant.',
             security: "is_granted('ROLE_ADMIN')",
-            securityMessage: 'Seul un administrateur peut modifier un role.'
+            securityMessage: 'Seul un administrateur peut modifier un rôle.'
         ),
         new Delete(
-            description: 'Supprime un role du catalogue.',
+            description: 'Supprime un rôle du catalogue.',
             security: "is_granted('ROLE_ADMIN')",
-            securityMessage: 'Seul un administrateur peut supprimer un role.'
+            securityMessage: 'Seul un administrateur peut supprimer un rôle.'
         ),
     ]
 )]
@@ -82,15 +84,15 @@ class Role
     #[ORM\Column(length: 150)]
     #[ApiProperty(openapiContext: ['example' => 'Neo'])]
     #[Groups(['role:read', 'role:write', 'play:read', 'movie:read'])]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 150)]
+    #[Assert\NotBlank(message: 'Le prénom du rôle est obligatoire.')]
+    #[Assert\Length(max: 150, maxMessage: 'Le prénom du rôle ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $characterFirstName = null;
 
     #[ORM\Column(length: 150, nullable: true)]
     #[ApiProperty(openapiContext: ['example' => 'Anderson'])]
     #[Map(target: 'characterName', transform: [self::class, 'toCharacterName'])]
     #[Groups(['role:read', 'role:write', 'play:read', 'movie:read'])]
-    #[Assert\Length(max: 150)]
+    #[Assert\Length(max: 150, maxMessage: 'Le nom du rôle ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $characterLastName = null;
 
     /**

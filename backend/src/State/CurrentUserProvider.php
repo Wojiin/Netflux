@@ -8,6 +8,9 @@ use App\Entity\User;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
+/**
+ * @implements ProviderInterface<User>
+ */
 final class CurrentUserProvider implements ProviderInterface
 {
     public function __construct(
@@ -15,14 +18,16 @@ final class CurrentUserProvider implements ProviderInterface
     ) {
     }
 
+    // Ce provider alimente la route /me : au lieu de relire un id dans l'URL,
+    // il retourne directement l'utilisateur authentifié par Symfony Security.
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): User
     {
-        $user = $this->security->getUser();
+        $currentUser = $this->security->getUser();
 
-        if (!$user instanceof User) {
-            throw new AccessDeniedHttpException('Vous devez être connecté pour consulter votre profil.');
+        if (!$currentUser instanceof User) {
+            throw new AccessDeniedHttpException('Vous devez être connecté pour accéder à votre profil.');
         }
 
-        return $user;
+        return $currentUser;
     }
 }

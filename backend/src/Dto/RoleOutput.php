@@ -10,6 +10,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
 final class RoleOutput
 {
     #[Groups(['role:read'])]
+    public ?int $id = null;
+
+    #[Groups(['role:read'])]
     public ?string $characterFirstName = null;
 
     #[Groups(['role:read'])]
@@ -21,6 +24,11 @@ final class RoleOutput
     public function getCharacterFirstName(): ?string
     {
         return $this->characterFirstName;
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
     }
 
     public function getCharacterLastName(): ?string

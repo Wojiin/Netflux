@@ -1,0 +1,13 @@
+.git
+.gitignore
+.agents
+.codex
+tmp
+tmp_*.txt
+tmp_*.json
+conception
+
+backend/vendor
+backend/var
+frontend/node_modules
+frontend/dist

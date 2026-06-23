@@ -1,4 +1,6 @@
 security:
+    # La hiérarchie déclare qu'un administrateur hérite automatiquement des
+    # permissions d'un utilisateur classique.
     role_hierarchy:
         ROLE_ADMIN: ROLE_USER
 
@@ -8,20 +10,24 @@ security:
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        # used to reload user from session & other features (e.g. switch_user)
+        # Provider principal utilisé par Symfony Security pour retrouver un
+        # utilisateur à partir de son identifiant de connexion.
         app_user_provider:
             entity:
                 class: App\Entity\User
                 property: email
 
     firewalls:
+        # Firewall technique pour les outils de développement Symfony.
         dev:
-            # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
+        # Firewall public pour la documentation API et les schémas d'erreur.
         api_docs:
             pattern: ^/api/(docs|contexts|validation_errors)
             security: false
+        # Firewall de connexion : il active le mécanisme json_login de Symfony
+        # puis délègue la génération du JWT au handler Lexik.
         login:
             pattern: ^/api/login$
             stateless: true
@@ -31,15 +37,27 @@ security:
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+        # Firewall de rafraîchissement : il ne vérifie pas un JWT d'accès, mais
+        # laisse Gesdinet relire le refresh token envoyé par cookie.
+        token_refresh:
+            pattern: ^/api/token/refresh$
+            stateless: true
+            provider: app_user_provider
+            refresh_jwt:
+                check_path: /api/token/refresh
+        # Firewall principal de l'API : toute route /api protégée passe ici et
+        # attend un Bearer token JWT valide.
         api:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
             jwt: ~
 
-    # Note: Only the *first* matching rule is applied
+    # Les règles sont lues de haut en bas : la première qui matche gagne.
     access_control:
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/refresh$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/invalidate$, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/register$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/contexts, roles: PUBLIC_ACCESS }
@@ -52,8 +70,8 @@ security:
 when@test:
     security:
         password_hashers:
-            # Password hashers are resource-intensive by design to ensure security.
-            # In tests, it's safe to reduce their cost to improve performance.
+            # En test, on réduit volontairement le coût du hash pour accélérer
+            # l'exécution sans changer le comportement fonctionnel.
             App\Entity\User:
                 algorithm: auto
                 cost: 4 # Lowest possible value for bcrypt

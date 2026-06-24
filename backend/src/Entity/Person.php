@@ -15,6 +15,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Dto\PersonOutput;
 use App\Repository\PersonRepository;
+use App\State\PersonDeleteProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\ObjectMapper\Attribute\Map;
@@ -39,14 +40,14 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(
             output: PersonOutput::class,
             description: "Retourne le détail d'une personne.",
-            security: "is_granted('ROLE_USER')",
-            securityMessage: 'Vous devez être connecté pour consulter une personne.'
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Seul un administrateur peut consulter une personne.'
         ),
         new GetCollection(
             output: PersonOutput::class,
             description: 'Retourne la liste des personnes.',
-            security: "is_granted('ROLE_USER')",
-            securityMessage: 'Vous devez être connecté pour consulter les personnes.'
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Seul un administrateur peut consulter les personnes.'
         ),
         new Post(
             description: 'Crée une nouvelle personne dans le catalogue.',
@@ -64,6 +65,7 @@ use Symfony\Component\Validator\Constraints as Assert;
             securityMessage: 'Seul un administrateur peut modifier une personne.'
         ),
         new Delete(
+            processor: PersonDeleteProcessor::class,
             description: 'Supprime une personne du catalogue.',
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Seul un administrateur peut supprimer une personne.'
@@ -82,38 +84,49 @@ class Person
     #[ORM\Column(length: 150)]
     #[ApiProperty(openapiContext: ['example' => 'Leonardo'])]
     #[Groups(['person:read', 'person:write', 'director:read', 'actor:read', 'movie:read'])]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 150)]
+    #[Assert\NotBlank(message: 'Le prénom est obligatoire.')]
+    #[Assert\Length(max: 150, maxMessage: 'Le prénom ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 150)]
     #[ApiProperty(openapiContext: ['example' => 'DiCaprio'])]
     #[Groups(['person:read', 'person:write', 'director:read', 'actor:read', 'movie:read'])]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 150)]
+    #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
+    #[Assert\Length(max: 150, maxMessage: 'Le nom ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 50)]
     #[ApiProperty(openapiContext: ['example' => 'male'])]
     #[Groups(['person:read', 'person:write'])]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 50)]
+    #[Assert\NotBlank(message: 'Le genre de la personne est obligatoire.')]
+    #[Assert\Length(max: 50, maxMessage: 'Le genre de la personne ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $gender = null;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     #[ApiProperty(openapiContext: ['example' => '1974-11-11'])]
     #[Groups(['person:read', 'person:write'])]
-    #[Assert\NotNull]
-    #[Assert\LessThan('today')]
+    #[Assert\NotNull(message: 'La date de naissance est obligatoire.')]
+    #[Assert\LessThan('today', message: "La date de naissance doit être antérieure à aujourd'hui.")]
     private ?\DateTimeImmutable $birthday = null;
 
-    #[ORM\OneToOne(mappedBy: 'person', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'person', cascade: ['persist'])]
     #[Map(target: 'isActor', transform: [self::class, 'hasActorProfile'])]
     private ?Actor $actorProfile = null;
 
-    #[ORM\OneToOne(mappedBy: 'person', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'person', cascade: ['persist'])]
     #[Map(target: 'isDirector', transform: [self::class, 'hasDirectorProfile'])]
     private ?Director $directorProfile = null;
+
+    #[ORM\Column(name: 'portrait_link', length: 1024)]
+    #[ApiProperty(
+        description: 'URL du portrait de la personne.',
+        openapiContext: ['example' => 'https://image.tmdb.org/t/p/w500/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg']
+    )]
+    #[Groups(['person:read', 'person:write', 'director:read', 'actor:read', 'movie:read'])]
+    #[Assert\NotBlank(message: 'Le portrait est obligatoire.')]
+    #[Assert\Url(message: 'Le portrait doit être une URL valide.')]
+    #[Assert\Length(max: 1024, maxMessage: 'Le portrait ne doit pas dépasser {{ limit }} caractères.')]
+    private ?string $portraitLink = null;
 
     public function getId(): ?int
     {
@@ -208,5 +221,17 @@ class Person
     public static function hasDirectorProfile(?Director $directorProfile): bool
     {
         return null !== $directorProfile;
+    }
+
+    public function getPortraitLink(): ?string
+    {
+        return $this->portraitLink;
+    }
+
+    public function setPortraitLink(string $portraitLink): static
+    {
+        $this->portraitLink = $portraitLink;
+
+        return $this;
     }
 }

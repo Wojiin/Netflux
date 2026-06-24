@@ -14,12 +14,15 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Dto\ActorOutput;
+use App\Dto\PersonProfileInput;
 use App\Repository\ActorRepository;
+use App\State\PersonProfileWriteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiFilter(SearchFilter::class, properties: [
     'person.firstName' => 'partial',
@@ -44,16 +47,22 @@ use Symfony\Component\Serializer\Attribute\Groups;
             description: 'Retourne la liste des acteurs.',
         ),
         new Post(
+            input: PersonProfileInput::class,
+            processor: PersonProfileWriteProcessor::class,
             description: 'Crée un nouvel acteur dans le catalogue.',
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Seul un administrateur peut créer un acteur.'
         ),
         new Put(
+            input: PersonProfileInput::class,
+            processor: PersonProfileWriteProcessor::class,
             description: 'Remplace complètement un acteur existant.',
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Seul un administrateur peut modifier un acteur.'
         ),
         new Patch(
+            input: PersonProfileInput::class,
+            processor: PersonProfileWriteProcessor::class,
             description: 'Modifie partiellement un acteur existant.',
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Seul un administrateur peut modifier un acteur.'
@@ -74,14 +83,18 @@ class Actor
     #[Groups(['actor:read', 'play:read'])]
     private ?int $id = null;
 
-    #[ORM\OneToOne(inversedBy: 'actorProfile', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'actorProfile', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     #[ApiProperty(
         description: 'Personne associée à cet acteur.',
         openapiContext: ['example' => '/api/people/1']
     )]
+    #[Assert\DisableAutoMapping]
     #[Map(target: 'fullName', transform: [self::class, 'toFullName'])]
-    #[Groups(['actor:read', 'actor:write', 'play:read', 'movie:read'])]
+    #[Map(target: 'gender', source: 'person.gender')]
+    #[Map(target: 'birthday', source: 'person.birthday')]
+    #[Map(target: 'filmography', transform: [self::class, 'toFilmography'])]
+    #[Groups(['actor:read', 'play:read', 'movie:read'])]
     private ?Person $person = null;
 
     /**
@@ -146,5 +159,30 @@ class Actor
         $fullName = trim(sprintf('%s %s', $person?->getFirstName() ?? '', $person?->getLastName() ?? ''));
 
         return '' === $fullName ? null : $fullName;
+    }
+
+    /**
+     * @param Person|null $person
+     *
+     * @return list<array{filmId:int|null, title:?string, imgLink:?string, releasedAt:?\DateTimeImmutable, roleId:int|null, roleName:?string}>
+     */
+    public static function toFilmography(?Person $person, object $source): array
+    {
+        if (!$source instanceof self) {
+            return [];
+        }
+
+        return $source->getPlays()
+            ->map(static function (Play $play): array {
+                return [
+                    'filmId' => $play->getFilm()?->getId(),
+                    'title' => $play->getFilm()?->getTitle(),
+                    'imgLink' => $play->getFilm()?->getImgLink(),
+                    'releasedAt' => $play->getFilm()?->getReleasedAt(),
+                    'roleId' => $play->getRole()?->getId(),
+                    'roleName' => Play::toRoleName($play->getRole()),
+                ];
+            })
+            ->toArray();
     }
 }

@@ -1,0 +1,194 @@
+{
+    "Foundation":  {
+                       "trailer":  null,
+                       "image":  null
+                   },
+    "Inception":  {
+                      "trailer":  "https://www.imdb.com/title/tt1375666/videogallery/",
+                      "image":  "https://upload.wikimedia.org/wikipedia/en/2/2e/Inception_%282010%29_theatrical_poster.jpg"
+                  },
+    "Dune":  {
+                 "trailer":  "https://www.imdb.com/title/tt1160419/videogallery/",
+                 "image":  "https://upload.wikimedia.org/wikipedia/en/8/8e/Dune_%282021_film%29.jpg"
+             },
+    "March of the Penguins":  {
+                                  "trailer":  null,
+                                  "image":  null
+                              },
+    "Tartuffe":  {
+                     "trailer":  null,
+                     "image":  "https://upload.wikimedia.org/wikipedia/commons/d/d2/Tartuffe.jpg"
+                 },
+    "Othello":  {
+                    "trailer":  null,
+                    "image":  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Othello_et_Desd%C3%A9mone_%C3%A0_Venise_-_Th%C3%A9odore_Chass%C3%A9riau_-_Mus%C3%A9e_du_Louvre_Peintures_RF_3897.jpg/3840px-Othello_et_Desd%C3%A9mone_%C3%A0_Venise_-_Th%C3%A9odore_Chass%C3%A9riau_-_Mus%C3%A9e_du_Louvre_Peintures_RF_3897.jpg"
+                },
+    "The Act of Killing":  {
+                               "trailer":  null,
+                               "image":  null
+                           },
+    "Phèdre":  {
+                   "trailer":  null,
+                   "image":  null
+               },
+    "Antigone":  {
+                     "trailer":  null,
+                     "image":  null
+                 },
+    "Free Solo":  {
+                      "trailer":  "https://www.imdb.com/title/tt7775622/videogallery/",
+                      "image":  "https://upload.wikimedia.org/wikipedia/en/9/9c/Free_Solo.png"
+                  },
+    "Breaking Bad":  {
+                         "trailer":  "https://www.imdb.com/title/tt0903747/videogallery/",
+                         "image":  "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Breaking_Bad_logo.svg/500px-Breaking_Bad_logo.svg.png"
+                     },
+    "Cyrano de Bergerac":  {
+                               "trailer":  null,
+                               "image":  null
+                           },
+    "Senna":  {
+                  "trailer":  null,
+                  "image":  null
+              },
+    "Band of Brothers":  {
+                             "trailer":  null,
+                             "image":  null
+                         },
+    "The Last of Us":  {
+                           "trailer":  "https://www.imdb.com/title/tt3581920/videogallery/",
+                           "image":  null
+                       },
+    "Amy":  {
+                "trailer":  null,
+                "image":  null
+            },
+    "Man on Wire":  {
+                        "trailer":  null,
+                        "image":  null
+                    },
+    "Stranger Things":  {
+                            "trailer":  "https://www.imdb.com/title/tt4574334/videogallery/",
+                            "image":  "https://upload.wikimedia.org/wikipedia/commons/3/38/Stranger_Things_logo.png"
+                        },
+    "Argo":  {
+                 "trailer":  "https://www.imdb.com/title/tt1024648/videogallery/",
+                 "image":  "https://upload.wikimedia.org/wikipedia/en/e/e1/Argo2012Poster.jpg"
+             },
+    "The Dark Knight":  {
+                            "trailer":  "https://www.imdb.com/title/tt0468569/videogallery/",
+                            "image":  "https://upload.wikimedia.org/wikipedia/en/1/1c/The_Dark_Knight_%282008_film%29.jpg"
+                        },
+    "Macbeth":  {
+                    "trailer":  null,
+                    "image":  null
+                },
+    "Dark":  {
+                 "trailer":  "https://www.imdb.com/title/tt5753856/videogallery/",
+                 "image":  null
+             },
+    "Jiro Dreams of Sushi":  {
+                                 "trailer":  null,
+                                 "image":  null
+                             },
+    "My Octopus Teacher":  {
+                               "trailer":  "https://www.imdb.com/title/tt12888462/videogallery/",
+                               "image":  "https://upload.wikimedia.org/wikipedia/en/0/06/My_Octopus_Teacher_poster.jpg"
+                           },
+    "The Expanse":  {
+                        "trailer":  null,
+                        "image":  null
+                    },
+    "No Country for Old Men":  {
+                                   "trailer":  "https://www.imdb.com/title/tt0477348/videogallery/",
+                                   "image":  "https://upload.wikimedia.org/wikipedia/en/8/8b/No_Country_for_Old_Men_poster.jpg"
+                               },
+    "Se7en":  {
+                  "trailer":  "https://www.imdb.com/title/tt0114369/videogallery/",
+                  "image":  "https://upload.wikimedia.org/wikipedia/en/6/68/Seven_%28movie%29_poster.jpg"
+              },
+    "The Shawshank Redemption":  {
+                                     "trailer":  "https://www.imdb.com/title/tt0111161/videogallery/",
+                                     "image":  "https://upload.wikimedia.org/wikipedia/en/8/81/ShawshankRedemptionMoviePoster.jpg"
+                                 },
+    "The Misanthrope":  {
+                            "trailer":  null,
+                            "image":  null
+                        },
+    "Mad Max: Fury Road":  {
+                               "trailer":  "https://www.imdb.com/title/tt1392190/videogallery/",
+                               "image":  "https://upload.wikimedia.org/wikipedia/en/6/6e/Mad_Max_Fury_Road.jpg"
+                           },
+    "King Lear":  {
+                      "trailer":  null,
+                      "image":  null
+                  },
+    "Romeo and Juliet":  {
+                             "trailer":  null,
+                             "image":  null
+                         },
+    "The Matrix":  {
+                       "trailer":  "https://www.imdb.com/title/tt0133093/videogallery/",
+                       "image":  "https://upload.wikimedia.org/wikipedia/en/d/db/The_Matrix.png"
+                   },
+    "Arcane":  {
+                   "trailer":  null,
+                   "image":  null
+               },
+    "Chernobyl":  {
+                      "trailer":  null,
+                      "image":  null
+                  },
+    "No Exit":  {
+                    "trailer":  null,
+                    "image":  null
+                },
+    "Won’t You Be My Neighbor?":  {
+                                      "trailer":  null,
+                                      "image":  null
+                                  },
+    "Severance":  {
+                      "trailer":  "https://www.imdb.com/title/tt11280740/videogallery/",
+                      "image":  null
+                  },
+    "The Departed":  {
+                         "trailer":  "https://www.imdb.com/title/tt0407887/videogallery/",
+                         "image":  "https://upload.wikimedia.org/wikipedia/en/5/50/Departed234.jpg"
+                     },
+    "Icarus":  {
+                   "trailer":  null,
+                   "image":  null
+               },
+    "Black Mirror":  {
+                         "trailer":  null,
+                         "image":  null
+                     },
+    "The Lord of the Rings: The Fellowship of the Ring":  {
+                                                              "trailer":  "https://www.imdb.com/title/tt0120737/videogallery/",
+                                                              "image":  "https://upload.wikimedia.org/wikipedia/en/f/fb/Lord_Rings_Fellowship_Ring.jpg"
+                                                          },
+    "Interstellar":  {
+                         "trailer":  "https://www.imdb.com/title/tt0816692/videogallery/",
+                         "image":  "https://upload.wikimedia.org/wikipedia/en/b/bc/Interstellar_film_poster.jpg"
+                     },
+    "Waiting for Godot":  {
+                              "trailer":  null,
+                              "image":  null
+                          },
+    "The Cove":  {
+                     "trailer":  null,
+                     "image":  null
+                 },
+    "13th":  {
+                 "trailer":  null,
+                 "image":  null
+             },
+    "Hamlet":  {
+                   "trailer":  null,
+                   "image":  null
+               },
+    "True Detective":  {
+                           "trailer":  "https://www.imdb.com/title/tt2356777/videogallery/",
+                           "image":  "https://upload.wikimedia.org/wikipedia/en/5/5a/True_Detective_2014_Intertitle.jpg"
+                       }
+}

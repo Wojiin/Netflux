@@ -10,7 +10,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-final class UserWatchHistoryProvider implements ProviderInterface
+final class UserWatchedProvider implements ProviderInterface
 {
     public function __construct(
         private readonly Security $security,

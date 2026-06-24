@@ -25,7 +25,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiFilter(SearchFilter::class, properties: ['name' => 'partial'])]
 #[ApiFilter(OrderFilter::class, properties: ['id', 'name'])]
 #[ApiResource(
-    description: 'Représente une catégorie de films exposée dans l’API.',
+    description: 'Représente une catégorie de films exposée dans l API.',
     paginationEnabled: true,
     paginationItemsPerPage: 10,
     paginationClientItemsPerPage: true,
@@ -39,7 +39,9 @@ use Symfony\Component\Validator\Constraints as Assert;
             description: 'Retourne la liste des genres disponibles.',
         ),
         new Get(
-            output: GenreOutput::class,
+            // On garde le GET item sur l'entité pour que les IRI du type
+            // /api/genres/1 soient correctement dénormalisées quand un Film est
+            // créé ou modifié en JSON-LD.
             description: "Retourne le détail d'un genre.",
         ),
         new Post(
@@ -76,14 +78,14 @@ class Genre
     #[ORM\Column(length: 50)]
     #[ApiProperty(openapiContext: ['example' => 'Science-fiction'])]
     #[Groups(['genre:read', 'genre:write', 'movie:read'])]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 50)]
+    #[Assert\NotBlank(message: 'Le nom du genre est obligatoire.')]
+    #[Assert\Length(max: 50, maxMessage: 'Le nom du genre ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $name = null;
 
     /**
      * @var Collection<int, Film>
      */
-    #[ORM\ManyToMany(targetEntity: Film::class, inversedBy: 'genres')]
+    #[ORM\OneToMany(targetEntity: Film::class, mappedBy: 'genre')]
     #[Map(target: 'filmTitles', transform: [self::class, 'toFilmTitles'])]
     #[Groups(['genre:read'])]
     private Collection $films;
@@ -122,6 +124,7 @@ class Genre
     {
         if (!$this->films->contains($film)) {
             $this->films->add($film);
+            $film->setGenre($this);
         }
 
         return $this;
@@ -129,7 +132,9 @@ class Genre
 
     public function removeFilm(Film $film): static
     {
-        $this->films->removeElement($film);
+        if ($this->films->removeElement($film) && $film->getGenre() === $this) {
+            $film->setGenre(null);
+        }
 
         return $this;
     }

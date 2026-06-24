@@ -328,62 +328,12 @@ npm run build
 
 ## Tests
 
-Le backend est prepare pour tourner en environnement `test` Symfony dans Docker.
-Le projet contient deja l'amorce PHPUnit Symfony suivante :
+A ce stade, le projet ne contient pas encore de suite PHPUnit ou Vitest dediee.
+Les verifications fonctionnelles ont ete faites manuellement sur les flux critiques :
 
-- `backend/phpunit.dist.xml`
-- `backend/tests/bootstrap.php`
-- `backend/.env.test`
+- login / refresh / logout
+- pages protegees
+- favoris
+- protections USER / ADMIN
+- create / update / delete film cote admin
 
-### Travailler en dev dans le navigateur et tester le backend en parallele
-
-Le fonctionnement recommande est le suivant :
-
-- la stack `dev` sert au frontend dans le navigateur
-- la stack `test` sert au backend dans le terminal pour PHPUnit
-- les deux peuvent tourner en meme temps sans se perturber
-
-Depuis la racine du projet :
-
-1. Demarrer l'environnement `dev` pour le frontend et l'API de navigation :
-
-```bash
-docker compose -f docker-compose.dev.yaml up -d
-```
-
-2. Demarrer l'environnement `test` pour les tests backend uniquement :
-
-```bash
-docker compose -f docker-compose.test.yaml up -d
-```
-
-3. Ouvrir le frontend de dev dans le navigateur :
-
-- Frontend : `http://localhost:5173`
-- API de dev : `http://localhost:8080/api`
-
-4. Lancer les tests backend dans le terminal :
-
-```bash
-docker compose -f docker-compose.test.yaml exec backend php bin/phpunit
-```
-
-Pour lancer un seul fichier :
-
-```bash
-docker compose -f docker-compose.test.yaml exec backend php bin/phpunit tests/Functional/Api/FilmApiTest.php
-```
-
-Si vous etes deja dans `backend/`, utilisez les chemins relatifs vers la racine :
-
-```bash
-docker compose -f ..\docker-compose.dev.yaml up -d
-docker compose -f ..\docker-compose.test.yaml up -d
-docker compose -f ..\docker-compose.test.yaml exec backend php bin/phpunit
-```
-
-Si vous voulez aussi demarrer le frontend de test ou le Nginx de test pour de l'e2e, utilisez le profil `e2e` :
-
-```bash
-docker compose -f docker-compose.test.yaml --profile e2e up -d
-```

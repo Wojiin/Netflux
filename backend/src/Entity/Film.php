@@ -14,8 +14,10 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use App\Dto\FilmListOutput;
 use App\Dto\FilmOutput;
 use App\Enum\ContentType;
+use App\Filter\MovieSearchFilter;
 use App\Repository\FilmRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -26,12 +28,14 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiFilter(SearchFilter::class, properties: [
-    'genres.id' => 'exact',
+    'genre.id' => 'exact',
     'title' => 'partial',
+    'genre.name' => 'partial',
     'synopsis' => 'partial',
 ])]
+#[ApiFilter(MovieSearchFilter::class)]
 #[ApiFilter(BackedEnumFilter::class, properties: ['type'])]
-#[ApiFilter(OrderFilter::class, properties: ['title', 'releasedAt', 'rate'])]
+#[ApiFilter(OrderFilter::class, properties: ['title', 'releasedAt', 'rate', 'averageRate', 'ratingsCount'])]
 #[ApiResource(
     description: "Représente un film exposé dans l'API.",
     paginationEnabled: true,
@@ -43,8 +47,9 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new GetCollection(
             uriTemplate: '/movies',
-            output: FilmOutput::class,
-            description: 'Retourne une collection paginée de films. La pagination utilise `page` et `itemsPerPage`. Les filtres sont exposés comme dans le cours avec des ApiFilter : recherche partielle sur `title` et `synopsis`, filtre exact sur `genres.id` et `type`, et tri via `order[...]`.',
+            output: FilmListOutput::class,
+            normalizationContext: ['groups' => ['movie:list:read']],
+            description: 'Retourne une collection paginée de films. La pagination utilise `page` et `itemsPerPage`.',
         ),
         new Get(
             uriTemplate: '/movies/{id}',
@@ -53,7 +58,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Post(
             uriTemplate: '/movies',
-            description: 'Cree un nouveau film dans le catalogue.',
+            description: 'Crée un nouveau film dans le catalogue.',
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Seul un administrateur peut créer un film.'
         ),
@@ -90,69 +95,99 @@ class Film
     #[ORM\Column(length: 255)]
     #[ApiProperty(description: 'Titre du film.', openapiContext: ['example' => 'Inception'])]
     #[Groups(['movie:read', 'movie:write', 'genre:read', 'user:read'])]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 255)]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
+    #[Assert\Length(max: 255, maxMessage: 'Le titre ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $title = null;
 
     #[ORM\Column(enumType: ContentType::class)]
     #[ApiProperty(description: 'Type de contenu du film.', openapiContext: ['example' => 'film'])]
     #[Map(target: 'type', transform: [self::class, 'toTypeValue'])]
     #[Groups(['movie:read', 'movie:write', 'genre:read', 'user:read'])]
-    #[Assert\NotNull]
+    #[Assert\NotNull(message: 'Le type est obligatoire.')]
     private ?ContentType $type = null;
 
     #[ORM\Column(name: 'released_at', type: Types::DATE_IMMUTABLE)]
     #[ApiProperty(description: 'Date de sortie du film.', openapiContext: ['example' => '2010-07-16'])]
     #[Groups(['movie:read', 'movie:write'])]
-    #[Assert\NotNull]
+    #[Assert\NotNull(message: 'La date de sortie est obligatoire.')]
     private ?\DateTimeImmutable $releasedAt = null;
 
-    #[ORM\Column(name: 'img_link', length: 255)]
+    #[ORM\Column(name: 'img_link', length: 1024)]
     #[ApiProperty(
         description: "URL de l'affiche principale du film.",
         openapiContext: ['example' => 'https://image.tmdb.org/t/p/w500/8IB2e4r4oVhHnANbnm7O3Tj6tF8.jpg']
     )]
     #[Groups(['movie:read', 'movie:write'])]
-    #[Assert\NotBlank]
-    #[Assert\Url]
-    #[Assert\Length(max: 255)]
+    #[Assert\NotBlank(message: "L'image principale est obligatoire.")]
+    #[Assert\Url(message: "L'image principale doit être une URL valide.")]
+    #[Assert\Length(max: 1024, maxMessage: "L'image principale ne doit pas dépasser {{ limit }} caractères.")]
     private ?string $imgLink = null;
 
     #[ORM\Column]
     #[ApiProperty(description: 'Durée du film en minutes.', openapiContext: ['example' => 148])]
     #[Groups(['movie:read', 'movie:write'])]
-    #[Assert\Positive]
+    #[Assert\Positive(message: 'La durée doit être un entier positif.')]
     private ?int $duration = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[ApiProperty(
         description: 'Synopsis du film.',
-        openapiContext: ['example' => "Dom Cobb infiltre les rêves de ses cibles pour voler des secrets, jusqu'au jour où une mission d'implantation d'idée met toute son équipe en danger."]
+        openapiContext: ['example' => "Dom Cobb infiltre les rêves de ses cibles pour voler des secrets."]
     )]
     #[Groups(['movie:read', 'movie:write'])]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Le synopsis est obligatoire.')]
     private ?string $synopsis = null;
 
     #[ORM\Column(nullable: true)]
     #[ApiProperty(description: 'Note du film sur 5.', openapiContext: ['example' => 5])]
     #[Groups(['movie:read', 'movie:write'])]
-    #[Assert\Range(min: 0, max: 5)]
+    #[Assert\Range(min: 0, max: 5, notInRangeMessage: 'La note doit être comprise entre {{ min }} et {{ max }}.')]
     private ?int $rate = null;
+
+    #[ORM\Column(name: 'average_rate', type: Types::DECIMAL, precision: 3, scale: 1, nullable: true)]
+    #[ApiProperty(description: 'Moyenne des notes utilisateurs sur 5, arrondie au dixième.', openapiContext: ['example' => 4.3])]
+    #[Groups(['movie:read'])]
+    private ?string $averageRate = null;
+
+    #[ORM\Column(name: 'ratings_count', options: ['default' => 0])]
+    #[ApiProperty(description: 'Nombre total de notes utilisateurs attribuées au film.', openapiContext: ['example' => 12])]
+    #[Groups(['movie:read'])]
+    private int $ratingsCount = 0;
+
+    /**
+     * @var Collection<int, Director>
+     */
+    // Un film peut avoir plusieurs réalisateurs et un réalisateur peut être
+    // rattaché à plusieurs films : la relation ManyToMany gère cette table pivot.
+    #[ORM\ManyToMany(targetEntity: Director::class, inversedBy: 'films')]
+    #[ORM\JoinTable(name: 'film_director')]
+    #[ApiProperty(
+        description: 'Réalisateurs associés au film.',
+        openapiContext: ['example' => ['/api/directors/1', '/api/directors/2']]
+    )]
+    #[Map(target: 'directorName', transform: [self::class, 'toDirectorLabel'])]
+    #[Map(target: 'directorNames', transform: [self::class, 'toDirectorNames'])]
+    #[Map(target: 'directorDetails', transform: [self::class, 'toDirectorDetails'])]
+    #[Groups(['movie:read', 'movie:write'])]
+    private Collection $directors;
 
     #[ORM\ManyToOne(inversedBy: 'films')]
     #[ORM\JoinColumn(nullable: false)]
+    // Le genre reste volontairement en ManyToOne : un film n'a qu'un genre
+    // principal dans ce modèle, ce qui simplifie les filtres de catalogue.
     #[ApiProperty(
-        description: 'Réalisateur associé au film.',
-        openapiContext: ['example' => '/api/directors/1']
+        description: 'Genre associé au film.',
+        openapiContext: ['example' => '/api/genres/1']
     )]
-    #[Map(target: 'directorName', transform: [self::class, 'toDirectorName'])]
+    #[Map(target: 'genreNames', transform: [self::class, 'toGenreNames'])]
     #[Groups(['movie:read', 'movie:write'])]
-    private ?Director $director = null;
+    private ?Genre $genre = null;
 
     /**
      * @var Collection<int, Play>
      */
     #[ORM\OneToMany(targetEntity: Play::class, mappedBy: 'film', orphanRemoval: true)]
+    #[Map(target: 'cast', transform: [self::class, 'toCast'])] 
     #[Groups(['movie:read'])]
     private Collection $plays;
 
@@ -165,47 +200,45 @@ class Film
     private Collection $posters;
 
     /**
-     * @var Collection<int, Genre>
-     */
-    #[ORM\ManyToMany(targetEntity: Genre::class, mappedBy: 'films')]
-    #[ApiProperty(
-        description: 'Genres associés au film.',
-        openapiContext: ['example' => ['/api/genres/1', '/api/genres/2']]
-    )]
-    #[Map(target: 'genreNames', transform: [self::class, 'toGenreNames'])]
-    #[Groups(['movie:read', 'movie:write'])]
-    private Collection $genres;
-
-    /**
      * @var Collection<int, User>
      */
+    // Côté inverse des favoris : cette collection est lue pour exposer l'état,
+    // mais les écritures passent par User::likedFilms.
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'likedFilms')]
     private Collection $likedByUsers;
 
     /**
      * @var Collection<int, User>
      */
+    // Côté inverse de l'historique "vus", synchronisé depuis User::watchedFilms.
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'watchedFilms')]
     private Collection $watchedByUsers;
 
-    #[ORM\Column(name: 'video_link', length: 255)]
+    /**
+     * @var Collection<int, FilmRating>
+     */
+    #[ORM\OneToMany(targetEntity: FilmRating::class, mappedBy: 'film', orphanRemoval: true)]
+    private Collection $filmRatings;
+
+    #[ORM\Column(name: 'video_link', length: 1024)]
     #[ApiProperty(
         description: 'URL de la bande-annonce du film.',
         openapiContext: ['example' => 'https://www.imdb.com/video/vi2861040665/']
     )]
     #[Groups(['movie:read', 'movie:write'])]
-    #[Assert\NotBlank]
-    #[Assert\Url]
-    #[Assert\Length(max: 255)]
+    #[Assert\NotBlank(message: 'La bande-annonce est obligatoire.')]
+    #[Assert\Url(message: 'La bande-annonce doit être une URL valide.')]
+    #[Assert\Length(max: 1024, maxMessage: 'La bande-annonce ne doit pas dépasser {{ limit }} caractères.')]
     private ?string $videoLink = null;
 
     public function __construct()
     {
         $this->plays = new ArrayCollection();
         $this->posters = new ArrayCollection();
-        $this->genres = new ArrayCollection();
+        $this->directors = new ArrayCollection();
         $this->likedByUsers = new ArrayCollection();
         $this->watchedByUsers = new ArrayCollection();
+        $this->filmRatings = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -297,14 +330,62 @@ class Film
         return $this;
     }
 
-    public function getDirector(): ?Director
+    public function getAverageRate(): ?float
     {
-        return $this->director;
+        return null === $this->averageRate ? null : (float) $this->averageRate;
     }
 
-    public function setDirector(?Director $director): static
+    public function setAverageRate(?float $averageRate): static
     {
-        $this->director = $director;
+        $this->averageRate = null === $averageRate ? null : number_format($averageRate, 1, '.', '');
+
+        return $this;
+    }
+
+    public function getRatingsCount(): int
+    {
+        return $this->ratingsCount;
+    }
+
+    public function setRatingsCount(int $ratingsCount): static
+    {
+        $this->ratingsCount = max(0, $ratingsCount);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Director>
+     */
+    public function getDirectors(): Collection
+    {
+        return $this->directors;
+    }
+
+    public function addDirector(Director $director): static
+    {
+        if (!$this->directors->contains($director)) {
+            $this->directors->add($director);
+        }
+
+        return $this;
+    }
+
+    public function removeDirector(Director $director): static
+    {
+        $this->directors->removeElement($director);
+
+        return $this;
+    }
+
+    public function getGenre(): ?Genre
+    {
+        return $this->genre;
+    }
+
+    public function setGenre(?Genre $genre): static
+    {
+        $this->genre = $genre;
 
         return $this;
     }
@@ -368,33 +449,6 @@ class Film
     }
 
     /**
-     * @return Collection<int, Genre>
-     */
-    public function getGenres(): Collection
-    {
-        return $this->genres;
-    }
-
-    public function addGenre(Genre $genre): static
-    {
-        if (!$this->genres->contains($genre)) {
-            $this->genres->add($genre);
-            $genre->addFilm($this);
-        }
-
-        return $this;
-    }
-
-    public function removeGenre(Genre $genre): static
-    {
-        if ($this->genres->removeElement($genre)) {
-            $genre->removeFilm($this);
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection<int, User>
      */
     public function getLikedByUsers(): Collection
@@ -406,6 +460,8 @@ class Film
     {
         if (!$this->likedByUsers->contains($likedByUser)) {
             $this->likedByUsers->add($likedByUser);
+            // On maintient les deux collections en phase en mémoire, même si le
+            // vrai côté propriétaire de la table pivot reste User::likedFilms.
             $likedByUser->addLikedFilm($this);
         }
 
@@ -433,6 +489,7 @@ class Film
     {
         if (!$this->watchedByUsers->contains($watchedByUser)) {
             $this->watchedByUsers->add($watchedByUser);
+            // Synchronisation bidirectionnelle équivalente pour l'historique.
             $watchedByUser->addWatchedFilm($this);
         }
 
@@ -448,30 +505,120 @@ class Film
         return $this;
     }
 
+    /**
+     * @return Collection<int, FilmRating>
+     */
+    public function getFilmRatings(): Collection
+    {
+        return $this->filmRatings;
+    }
+
+    public function addFilmRating(FilmRating $filmRating): static
+    {
+        if (!$this->filmRatings->contains($filmRating)) {
+            $this->filmRatings->add($filmRating);
+            $filmRating->setFilm($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFilmRating(FilmRating $filmRating): static
+    {
+        if ($this->filmRatings->removeElement($filmRating)) {
+            if ($filmRating->getFilm() === $this) {
+                $filmRating->setFilm(null);
+            }
+        }
+
+        return $this;
+    }
+
     public static function toTypeValue(?ContentType $type): ?string
     {
         return $type?->value;
     }
 
-    public static function toDirectorName(?Director $director): ?string
-    {
-        $fullName = trim(sprintf(
-            '%s %s',
-            $director?->getPerson()?->getFirstName() ?? '',
-            $director?->getPerson()?->getLastName() ?? ''
-        ));
-
-        return '' === $fullName ? null : $fullName;
-    }
-
     /**
-     * @param Collection<int, Genre> $genres
+     * @param Collection<int, Director> $directors
      *
      * @return list<string>
      */
-    public static function toGenreNames(Collection $genres): array
+    public static function toDirectorNames(Collection $directors): array
     {
-        return $genres->map(static fn (Genre $genre) => $genre->getName())->toArray();
+        return $directors
+            ->map(static function (Director $director): string {
+                return trim(sprintf(
+                    '%s %s',
+                    $director->getPerson()?->getFirstName() ?? '',
+                    $director->getPerson()?->getLastName() ?? ''
+                ));
+            })
+            ->filter(static fn (string $fullName): bool => '' !== $fullName)
+            ->toArray();
+    }
+
+    /**
+     * @param Collection<int, Director> $directors
+     */
+    public static function toDirectorLabel(Collection $directors): ?string
+    {
+        $directorNames = self::toDirectorNames($directors);
+
+        return [] === $directorNames ? null : implode(', ', $directorNames);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function toGenreNames(?Genre $genre): array
+    {
+        return $genre?->getName() ? [$genre->getName()] : [];
+    }
+
+    /**
+     * @param Collection<int, Director> $directors
+     *
+     * @return list<array{id:int|null, fullName:string, portraitLink:?string}>
+     */
+    public static function toDirectorDetails(Collection $directors): array
+    {
+        return $directors
+            ->map(static function (Director $director): array {
+                $fullName = trim(sprintf(
+                    '%s %s',
+                    $director->getPerson()?->getFirstName() ?? '',
+                    $director->getPerson()?->getLastName() ?? ''
+                ));
+
+                return [
+                    'id' => $director->getId(),
+                    'fullName' => $fullName,
+                    'portraitLink' => $director->getPerson()?->getPortraitLink(),
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
+     * @param Collection<int, Play> $plays
+     *
+     * @return list<array{id:int|null, actorId:int|null, actorName:?string, portraitLink:?string, roleId:int|null, roleName:?string}>
+     */
+    public static function toCast(Collection $plays): array
+    {
+        return $plays
+            ->map(static function (Play $play): array {
+                return [
+                    'id' => $play->getId(),
+                    'actorId' => $play->getActor()?->getId(),
+                    'actorName' => Play::toActorName($play->getActor()),
+                    'portraitLink' => $play->getActor()?->getPerson()?->getPortraitLink(),
+                    'roleId' => $play->getRole()?->getId(),
+                    'roleName' => Play::toRoleName($play->getRole()),
+                ];
+            })
+            ->toArray();
     }
 
     /**

@@ -1,0 +1,26 @@
+gesdinet_jwt_refresh_token:
+    # Le bundle persiste ses refresh tokens dans notre entité Doctrine dédiée.
+    refresh_token_class: App\Entity\RefreshToken
+    # Durée de vie du refresh token : 30 jours.
+    ttl: 2592000
+    # Un refresh token peut être réutilisé tant qu'il n'expire pas.
+    single_use: false
+    # Sa date d'expiration n'est pas repoussée automatiquement à chaque usage.
+    ttl_update: false
+    token_parameter_name: refresh_token
+    cookie:
+        # Le refresh token est transporté par cookie plutôt que par JSON.
+        enabled: true
+        same_site: lax
+        path: /
+        http_only: true
+        secure: false
+        # Le client reçoit seulement le nouvel access token, pas le refresh
+        # token lui-même dans le corps de réponse.
+        remove_token_from_body: true
+
+when@prod:
+    gesdinet_jwt_refresh_token:
+        cookie:
+            # En production, le cookie refresh doit voyager uniquement en HTTPS.
+            secure: true

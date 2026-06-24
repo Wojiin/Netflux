@@ -33,14 +33,14 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(
             output: PosterOutput::class,
             description: "Retourne le détail d'une affiche.",
-            security: "is_granted('ROLE_USER')",
-            securityMessage: 'Vous devez être connecté pour consulter une affiche.'
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Seul un administrateur peut consulter une affiche.'
         ),
         new GetCollection(
             output: PosterOutput::class,
             description: 'Retourne la liste des affiches.',
-            security: "is_granted('ROLE_USER')",
-            securityMessage: 'Vous devez être connecté pour consulter les affiches.'
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Seul un administrateur peut consulter les affiches.'
         ),
         new Post(
             description: 'Crée une nouvelle affiche dans le catalogue.',
@@ -73,12 +73,12 @@ class Poster
     #[Groups(['poster:read', 'movie:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 1024)]
     #[ApiProperty(openapiContext: ['example' => 'https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg'])]
     #[Groups(['poster:read', 'poster:write', 'movie:read'])]
-    #[Assert\NotBlank]
-    #[Assert\Url]
-    #[Assert\Length(max: 255)]
+    #[Assert\NotBlank(message: "L'URL de l'affiche est obligatoire.")]
+    #[Assert\Url(message: "L'URL de l'affiche doit être valide.")]
+    #[Assert\Length(max: 1024, maxMessage: "L'URL de l'affiche ne doit pas dépasser {{ limit }} caractères.")]
     private ?string $url = null;
 
     #[ORM\ManyToOne(inversedBy: 'posters')]

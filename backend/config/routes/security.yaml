@@ -2,5 +2,17 @@ _security_logout:
     resource: security.route_loader.logout
     type: service
 
+# Point d'entrée de connexion lu par le firewall json_login.
 api_login:
     path: /api/login
+
+# Point d'entrée de refresh lu par le firewall refresh_jwt de Gesdinet.
+api_refresh_token:
+    path: /api/token/refresh
+
+# Route de déconnexion applicative : elle passe par notre contrôleur custom
+# pour supprimer les refresh tokens persistants et effacer le cookie.
+api_token_invalidate:
+    path: /api/token/invalidate
+    controller: App\Controller\ApiLogoutController
+    methods: [POST]
